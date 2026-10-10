@@ -145,6 +145,8 @@ function Burj() {
 
 /* ─── regia: camera, sole, nebbia, ombre, pin ──────────────────────────── */
 const FOG_DAY = new THREE.Color("#cfe0ec"), FOG_GOLD = new THREE.Color("#f2d3b0"), FOG_NIGHT = new THREE.Color("#141d2e");
+/** Intensità dei riflessi/luce ambientale del cielo (il cielo fisico è molto luminoso). */
+const ENV_DAY = Number(typeof window !== "undefined" && new URLSearchParams(window.location.search).get("env")) || 0.15;
 const SUN_LOW = new THREE.Color("#ffb57a"), SUN_HIGH = new THREE.Color("#fff3e2"), MOON = new THREE.Color("#93a8d6");
 
 function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildProgress: { current: number }; tier: Tier }) {
@@ -216,7 +218,7 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
     fog.color.copy(FOG_GOLD).lerp(FOG_DAY, day).lerp(FOG_NIGHT, L.night);
     const far = ch.id === "map" ? 9000 : lerp(5200, 3600, L.night);
     fog.near = 700; fog.far = lerp(fog.far, far, k);
-    scene.environmentIntensity = lerp(1, 0.18, L.night);
+    scene.environmentIntensity = lerp(ENV_DAY, ENV_DAY * 0.25, L.night);
 
     if (ch.id === "map") {
       pinEls.forEach((el, id) => {

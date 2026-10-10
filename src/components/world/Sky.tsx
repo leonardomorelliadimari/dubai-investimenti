@@ -46,18 +46,19 @@ void main() {
 export function Atmosphere() {
   const { gl, scene } = useThree();
   const sky = useMemo(() => makeSky(4500), []);
-  const envSky = useMemo(() => makeSky(100), []);
-  const envGround = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color(0.62, 0.5, 0.36) }), []);
-  const envScene = useMemo(() => {
-    const s = new THREE.Scene();
-    s.add(envSky);
+  // cielo + suolo per i riflessi, creati insieme (un oggetto 3D può stare in una sola scena)
+  const { envSky, envGround, envScene } = useMemo(() => {
+    const envSky = makeSky(100);
+    const envGround = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.62, 0.5, 0.36) });
+    const envScene = new THREE.Scene();
+    envScene.add(envSky);
     // sotto l'orizzonte: sabbia e città, non il nero del cielo fisico
     const g = new THREE.Mesh(new THREE.CircleGeometry(400, 32), envGround);
     g.rotation.x = -Math.PI / 2;
     g.position.y = -2;
-    s.add(g);
-    return s;
-  }, [envSky, envGround]);
+    envScene.add(g);
+    return { envSky, envGround, envScene };
+  }, []);
   const night = useMemo(
     () => new THREE.ShaderMaterial({
       vertexShader: nightVert, fragmentShader: nightFrag, uniforms: { uNight: { value: 0 } },
@@ -73,7 +74,8 @@ export function Atmosphere() {
    * rigenerarle durante l'animazione interferisce con la post-produzione.
    */
   const presets = useRef<{ elev: number; night: number; rt: THREE.WebGLRenderTarget }[]>([]);
-  useEffect(() => {
+  const frames = useRef(0);
+  const buildPresets = () => {
     const pmrem = new THREE.PMREMGenerator(gl);
     const prevTarget = gl.getRenderTarget();
     gl.setRenderTarget(null);
@@ -88,8 +90,15 @@ export function Atmosphere() {
     });
     gl.setRenderTarget(prevTarget);
     pmrem.dispose();
-    return () => { presets.current.forEach((p) => p.rt.dispose()); presets.current = []; };
-  }, [gl, envSky, envGround, envScene]);
+  };
+  const compiled = useRef(false);
+  useEffect(() => {
+    // attende che lo shader del cielo sia compilato: altrimenti i riflessi risultano spenti
+    let alive = true;
+    const cam = new THREE.PerspectiveCamera();
+    gl.compileAsync(envScene, cam).then(() => { if (alive) compiled.current = true; });
+    return () => { alive = false; presets.current.forEach((p) => p.rt.dispose()); presets.current = []; };
+  }, [gl, envScene]);
 
   useEffect(() => () => { sky.material.dispose(); envSky.material.dispose(); night.dispose(); }, [sky, envSky, night]);
 
@@ -102,6 +111,9 @@ export function Atmosphere() {
     sky.material.uniforms.sunPosition.value.copy(s.sun);
     sky.material.uniforms.time.value = clock.elapsedTime;
     night.uniforms.uNight.value = s.night;
+
+    // le mappe di riflesso si calcolano dopo i primi fotogrammi (renderer pronto)
+    if (compiled.current && ++frames.current > 2 && !presets.current.length) buildPresets();
 
     // sceglie la mappa di riflesso più vicina alla luce attuale
     let best: THREE.Texture | null = null, bd = Infinity;
