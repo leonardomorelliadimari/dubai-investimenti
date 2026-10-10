@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { AL_KHAIL, COAST, CREEK, LAKE, PALM, SZR, type Tower, type V2 } from "./geo";
+import { AL_KHAIL, CANAL, COAST, CREEK, LAKE, PALM, SZR, type Tower, type V2 } from "./geo";
 import { seeded } from "@/lib/random";
 
 export const LAND = { x0: -1600, x1: 1200, z0: -1400, z1: 1000 };
@@ -19,7 +19,7 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
   const day = document.createElement("canvas");
   day.width = W; day.height = H;
   const c = day.getContext("2d")!;
-  c.fillStyle = "#e4c79c";
+  c.fillStyle = "#dcb886";
   c.fillRect(0, 0, W, H);
   // grana del deserto
   for (let i = 0; i < (W * H) / 360; i++) {
@@ -46,6 +46,17 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
   c.fillStyle = "rgba(92,150,62,0.9)";
   c.beginPath(); c.ellipse(px(-175), pz(140), 55 * sx, 22 * sx, -0.3, 0, Math.PI * 2); c.fill();
   c.beginPath(); c.ellipse(px(-130), pz(80), 18 * sx, 10 * sx, 0, 0, Math.PI * 2); c.fill();
+  // parcheggi, giardini e piscine nei quartieri (dettaglio visibile dall'alto)
+  for (const [x, z, rad] of urban) {
+    for (let k = 0; k < rad * 0.9; k++) {
+      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * rad * 0.85;
+      const qx = px(x + Math.cos(a) * d), qz = pz(z + Math.sin(a) * d * 0.8);
+      const kind = r();
+      if (kind < 0.4) { c.fillStyle = "rgba(120,118,112,0.55)"; c.fillRect(qx, qz, (4 + r() * 6) * sx, (3 + r() * 4) * sx); }
+      else if (kind < 0.8) { c.fillStyle = `rgba(${70 + r() * 30},${120 + r() * 30},${55 + r() * 20},0.75)`; c.beginPath(); c.arc(qx, qz, (1.5 + r() * 3.5) * sx, 0, Math.PI * 2); c.fill(); }
+      else { c.fillStyle = "rgba(70,170,200,0.9)"; c.fillRect(qx, qz, 1.4 * sx, 0.9 * sx); }
+    }
+  }
   // occlusione ambientale al suolo: alone scuro morbido attorno a ogni edificio
   for (const t of towers) {
     const rad = (Math.max(t.w, t.d) * 0.5 + Math.min(10, 1.5 + t.h * 0.12)) * sx;
@@ -72,6 +83,7 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
   c.lineTo(px(LAND.x1), pz(LAND.z0));
   c.closePath(); c.fill();
   c.lineWidth = 30 * sx; path(c, CREEK); c.stroke();
+  c.lineWidth = 13 * sx; path(c, CANAL); c.stroke();
   c.beginPath(); c.ellipse(px(LAKE.x), pz(LAKE.z), LAKE.rx * sx, LAKE.rz * sx, 0, 0, Math.PI * 2); c.fill();
   c.globalCompositeOperation = "source-over";
   // Palm Jumeirah (terra emersa nel mare)
@@ -117,7 +129,7 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
 }
 
 /** Normal map dell'acqua: somma di onde con direzioni casuali (ripetibile senza cuciture). */
-export function makeWaterNormal(size = 512) {
+export function makeWaterNormal(size = 256) {
   const cv = document.createElement("canvas");
   cv.width = cv.height = size;
   const ctx = cv.getContext("2d")!;
@@ -145,7 +157,7 @@ export function makeWaterNormal(size = 512) {
   ctx.putImageData(img, 0, 0);
   const t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(260, 260);
+  t.repeat.set(380, 380);
   t.anisotropy = 8;
   return t;
 }

@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { currentChapter, measureChapters, worldInfo } from "./store";
 import type { Tier } from "./WorldScene";
 
-const WorldScene = dynamic(() => import("./WorldScene"), { ssr: false });
+const loadScene = () => import("./WorldScene");
+// il download della scena 3D parte subito, in parallelo al resto della pagina
+if (typeof window !== "undefined") void loadScene();
+const WorldScene = dynamic(loadScene, { ssr: false });
 
 function detectTier(): Tier | "none" {
   // ?q=low|mid|high forza la qualità (utile per test e confronti)
@@ -62,7 +65,7 @@ export function World() {
       {/* cielo di riserva mentre il 3D carica (o se WebGL non c'è) */}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,#5d8fb5_0%,#9fbdd0_34%,#f2cba0_62%,#f0a271_80%,#c98a62_100%)]" />
       {tier && tier !== "none" && (
-        <div className="absolute inset-0 transition-opacity duration-[1400ms] ease-out" style={{ opacity: ready ? 1 : 0 }}>
+        <div className="absolute inset-0 transition-opacity duration-700 ease-out" style={{ opacity: ready ? 1 : 0 }}>
           <WorldScene tier={tier} reduced={reduced} active={active} />
         </div>
       )}

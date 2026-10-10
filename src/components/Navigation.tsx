@@ -64,7 +64,7 @@ export function Navigation() {
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,border-color,color] duration-700 ease-[var(--ease-premium)] ${fg} ${
           scrolled && !open
-            ? dark ? "border-b border-ivory/[0.06] bg-night/60 backdrop-blur-xl" : "border-b border-ink/[0.06] bg-ivory/65 backdrop-blur-xl"
+            ? dark ? "border-b border-ivory/[0.06] bg-night/85" : "border-b border-ink/[0.06] bg-ivory/92"
             : "border-b border-transparent"
         }`}
       >

@@ -123,6 +123,6 @@ export function facadeMaterial(base: THREE.MeshStandardMaterialParameters, o: Op
       );
   };
   clampMaterial(m);
-  m.customProgramCacheKey = () => `facade-${o.style}-${o.floorH}-${o.colW}`;
+  m.customProgramCacheKey = () => `facade-${o.style}`;
   return m;
 }

@@ -30,9 +30,9 @@ export function Crane({ x, z, base = 0, height, jib = 34, speed = 0.12, phase = 
   });
   return (
     <group position={[x, base, z]}>
-      <mesh geometry={mast} material={craneMat} castShadow />
+      <mesh geometry={mast} material={craneMat} />
       <group ref={rot} position={[0, height, 0]}>
-        <mesh geometry={arm} material={craneMat} castShadow />
+        <mesh geometry={arm} material={craneMat} />
         <group ref={trolley} position={[10, 0, 0]}>
           <mesh position={[0, -0.2, 0]}><boxGeometry args={[1, 0.4, 1]} /><meshStandardMaterial color="#3b3b3b" /></mesh>
           <mesh ref={cable}><boxGeometry args={[0.05, 1, 0.05]} /><meshStandardMaterial color="#222" /></mesh>

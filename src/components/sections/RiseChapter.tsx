@@ -23,7 +23,7 @@ export function RiseChapter() {
           return (
             <div key={f.n} className={`absolute inset-x-4 bottom-6 md:inset-x-auto md:bottom-auto md:top-[58%] md:w-[min(420px,34vw)] md:-translate-y-1/2 ${right ? "md:right-10" : "md:left-10"}`}>
               <RangePop p={p} at={at} out={i === keyFacts.length - 1 ? undefined : at + step} from={right ? "right" : "left"}>
-                <article className="rounded-[26px] border border-white/40 bg-white/80 p-6 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.45)] md:bg-white/70 md:p-8 md:backdrop-blur-xl">
+                <article className="rounded-[26px] border border-white/40 bg-white/90 p-6 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.45)] md:p-8">
                   <div className="flex items-center justify-between">
                     <span className="eyebrow text-terracotta">{f.n} · {f.title}</span>
                     <span className="eyebrow text-mist">{f.n}/05</span>

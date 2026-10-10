@@ -107,26 +107,37 @@ function Traffic({ curves, density }: { curves: { curve: THREE.CatmullRomCurve3;
     cars.forEach((_, i) => bodyRef.current!.setColorAt(i, c.setHex(CAR_COLS[i % CAR_COLS.length])));
     if (bodyRef.current!.instanceColor) bodyRef.current!.instanceColor.needsUpdate = true;
   }, [cars]);
-  const o = useMemo(() => new THREE.Object3D(), []);
-  const p = useMemo(() => new THREE.Vector3(), []);
-  const t = useMemo(() => new THREE.Vector3(), []);
+  // tabelle precalcolate: punto + tangente ogni 1 unità lungo ogni strada
+  const luts = useMemo(() => curves.map((cv) => {
+    const n = Math.ceil(cv.len);
+    const pts = new Float32Array((n + 1) * 4);
+    const p = new THREE.Vector3(), t = new THREE.Vector3();
+    for (let i = 0; i <= n; i++) {
+      cv.curve.getPointAt(i / n, p); cv.curve.getTangentAt(i / n, t);
+      pts.set([p.x, p.z, t.x, t.z], i * 4);
+    }
+    return { n, pts };
+  }), [curves]);
+  const m = useMemo(() => new THREE.Matrix4(), []);
   useFrame((_, dt) => {
     const d = Math.min(dt, 0.05);
-    cars.forEach((car, i) => {
-      const cv = curves[car.road];
+    const body = bodyRef.current!, light = lightRef.current!;
+    for (let i = 0; i < cars.length; i++) {
+      const car = cars[i];
+      const cv = curves[car.road], L = luts[car.road];
       car.s = (car.s + car.speed * d) % cv.len;
       const u = car.dir > 0 ? car.s / cv.len : 1 - car.s / cv.len;
-      cv.curve.getPointAt(u, p); cv.curve.getTangentAt(u, t);
+      const k = Math.min(L.n, Math.round(u * L.n)) * 4;
+      const px = L.pts[k], pz = L.pts[k + 1], tx = L.pts[k + 2], tz = L.pts[k + 3];
       const w = cv.road.width;
       const laneW = (w * (cv.road.median ? 0.4 : 0.45)) / cv.road.lanes;
-      const off = (cv.road.median ? w * 0.07 : w * 0.04) + laneW * (car.lane + 0.5);
-      const side = car.dir > 0 ? -1 : 1;
-      o.position.set(p.x + -t.z * off * side, 0.15, p.z + t.x * off * side);
-      o.rotation.set(0, Math.atan2(-t.z, t.x) + (car.dir > 0 ? 0 : Math.PI), 0);
-      o.updateMatrix();
-      bodyRef.current!.setMatrixAt(i, o.matrix);
-      lightRef.current!.setMatrixAt(i, o.matrix);
-    });
+      const off = ((cv.road.median ? w * 0.07 : w * 0.04) + laneW * (car.lane + 0.5)) * (car.dir > 0 ? -1 : 1);
+      // matrice di rotazione attorno a Y (avanti = +x locale) + traslazione
+      const fx = car.dir > 0 ? tx : -tx, fz = car.dir > 0 ? tz : -tz;
+      m.set(fx, 0, -fz, px - tz * off, 0, 1, 0, 0.15, fz, 0, fx, pz + tx * off, 0, 0, 0, 1);
+      body.setMatrixAt(i, m);
+      light.setMatrixAt(i, m);
+    }
     bodyRef.current!.instanceMatrix.needsUpdate = true;
     lightRef.current!.instanceMatrix.needsUpdate = true;
     lightMat.opacity = facadeUniforms.uNight.value;
@@ -212,8 +223,8 @@ export function Palms({ density }: { density: number }) {
   }, [spots]);
   return (
     <>
-      <instancedMesh ref={a} args={[trunk, trunkMat, spots.length]} castShadow />
-      <instancedMesh ref={b} args={[crown, leafMat, spots.length]} castShadow />
+      <instancedMesh ref={a} args={[trunk, trunkMat, spots.length]} />
+      <instancedMesh ref={b} args={[crown, leafMat, spots.length]} />
     </>
   );
 }

@@ -63,7 +63,7 @@ export function MapChapter() {
               <AnimatePresence initial={false}>
                 <motion.article
                   key={a.id}
-                  className="rounded-[24px] border border-white/40 bg-white/85 p-6 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.5)] [grid-area:1/1] md:bg-white/75 md:p-7 md:backdrop-blur-xl"
+                  className="rounded-[24px] border border-white/40 bg-white/90 p-6 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.5)] [grid-area:1/1] md:p-7"
                   initial={{ opacity: 0, y: 24, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -12, scale: 0.98 }}

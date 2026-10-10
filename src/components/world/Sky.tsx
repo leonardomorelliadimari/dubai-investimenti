@@ -75,21 +75,22 @@ export function Atmosphere() {
    */
   const presets = useRef<{ elev: number; night: number; rt: THREE.WebGLRenderTarget }[]>([]);
   const frames = useRef(0);
-  const buildPresets = () => {
-    const pmrem = new THREE.PMREMGenerator(gl);
+  const todo = useRef<[number, number][]>([[14, 0], [40, 0], [4, 0], [-9, 1]]);
+  const pmremRef = useRef<THREE.PMREMGenerator | null>(null);
+  /** genera UNA mappa di riflesso per fotogramma (niente blocchi lunghi) */
+  const buildNextPreset = () => {
+    const next = todo.current.shift();
+    if (!next) { pmremRef.current?.dispose(); pmremRef.current = null; return; }
+    const pmrem = (pmremRef.current ??= new THREE.PMREMGenerator(gl));
     const prevTarget = gl.getRenderTarget();
     gl.setRenderTarget(null);
-    const list: [number, number][] = [[4, 0], [12, 0], [22, 0], [34, 0], [48, 0], [-6, 0.6], [-9, 1]];
-    const sun = new THREE.Vector3();
-    presets.current = list.map(([elev, n]) => {
-      sun.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - elev), THREE.MathUtils.degToRad(sunState.azimuth));
-      envSky.material.uniforms.sunPosition.value.copy(sun);
-      const day = THREE.MathUtils.clamp((elev + 2) / 25, 0, 1) * (1 - n);
-      envGround.color.setRGB(0.62, 0.5, 0.36).multiplyScalar(0.08 + 0.92 * day);
-      return { elev, night: n, rt: pmrem.fromScene(envScene, 0, 1, 1000) };
-    });
+    const [elev, n] = next;
+    const sun = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - elev), THREE.MathUtils.degToRad(sunState.azimuth));
+    envSky.material.uniforms.sunPosition.value.copy(sun);
+    const day = THREE.MathUtils.clamp((elev + 2) / 25, 0, 1) * (1 - n);
+    envGround.color.setRGB(0.62, 0.5, 0.36).multiplyScalar(0.08 + 0.92 * day);
+    presets.current.push({ elev, night: n, rt: pmrem.fromScene(envScene, 0, 1, 1000, { size: 128 }) });
     gl.setRenderTarget(prevTarget);
-    pmrem.dispose();
   };
   const compiled = useRef(false);
   useEffect(() => {
@@ -113,7 +114,7 @@ export function Atmosphere() {
     night.uniforms.uNight.value = s.night;
 
     // le mappe di riflesso si calcolano dopo i primi fotogrammi (renderer pronto)
-    if (compiled.current && ++frames.current > 2 && !presets.current.length) buildPresets();
+    if (compiled.current && ++frames.current > 2 && (todo.current.length || pmremRef.current)) buildNextPreset();
 
     // sceglie la mappa di riflesso più vicina alla luce attuale
     let best: THREE.Texture | null = null, bd = Infinity;

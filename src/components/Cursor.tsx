@@ -37,9 +37,9 @@ export function Cursor() {
 
   if (!enabled) return null;
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-[100] mix-blend-difference">
-      <div ref={dot} className="absolute left-0 top-0 -ml-[3px] -mt-[3px] h-1.5 w-1.5 rounded-full bg-white opacity-0" />
-      <div ref={ring} className="absolute left-0 top-0 -ml-4 -mt-4 h-8 w-8 rounded-full border border-white/80 opacity-0 transition-[width,height] duration-200" />
+    <div aria-hidden className="pointer-events-none fixed left-0 top-0 z-[100] h-0 w-0 overflow-visible mix-blend-difference">
+      <div ref={dot} className="absolute left-0 top-0 -ml-[3px] -mt-[3px] h-1.5 w-1.5 rounded-full bg-white opacity-0 will-change-transform" />
+      <div ref={ring} className="absolute left-0 top-0 -ml-4 -mt-4 h-8 w-8 rounded-full border border-white/80 opacity-0 will-change-transform transition-[width,height] duration-200" />
     </div>
   );
 }

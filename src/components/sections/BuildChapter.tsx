@@ -30,7 +30,7 @@ export function BuildChapter() {
 
         <div className="absolute inset-x-4 bottom-5 md:inset-x-auto md:bottom-10 md:right-10 md:w-[420px]">
           <RangePop p={p} at={0.06}>
-            <div className="rounded-[24px] border border-white/50 bg-white/85 p-6 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.45)] md:bg-white/75 md:p-7 md:backdrop-blur-xl">
+            <div className="rounded-[24px] border border-white/50 bg-white/90 p-6 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.45)] md:p-7">
               <ol className="flex gap-1.5" aria-label="Fasi">
                 {phases.map((x, i) => (
                   <li key={x.t} className="flex-1">

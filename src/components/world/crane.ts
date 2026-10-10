@@ -16,7 +16,13 @@ function strut(a: THREE.Vector3, b: THREE.Vector3, t = 0.14) {
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
 /** Torre (mast) a traliccio di sezione quadrata. */
+const cache = new Map<string, THREE.BufferGeometry>();
+const cached = (k: string, f: () => THREE.BufferGeometry) => { let g = cache.get(k); if (!g) { g = f(); cache.set(k, g); } return g; };
+
 export function buildMast(height: number, s = 1.6, seg = 2.4) {
+  return cached(`m${height}-${s}-${seg}`, () => buildMastRaw(height, s, seg));
+}
+function buildMastRaw(height: number, s: number, seg: number) {
   const parts: THREE.BufferGeometry[] = [];
   const h = s / 2;
   const corners = [[-h, -h], [h, -h], [h, h], [-h, h]];
@@ -36,6 +42,9 @@ export function buildMast(height: number, s = 1.6, seg = 2.4) {
 
 /** Braccio (jib + controbraccio + cabina + tiranti). Origine = sommità del mast. */
 export function buildJib(jibLen = 34, counterLen = 11) {
+  return cached(`j${jibLen}-${counterLen}`, () => buildJibRaw(jibLen, counterLen));
+}
+function buildJibRaw(jibLen: number, counterLen: number) {
   const parts: THREE.BufferGeometry[] = [];
   const w = 0.75, hh = 1.3, seg = 2;
   // braccio triangolare

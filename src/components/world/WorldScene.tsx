@@ -16,9 +16,9 @@ import { currentChapter, mapFocus, pinEls, setWorldReady, type ChapterId } from 
 export type Tier = "high" | "mid" | "low";
 
 const Q = {
-  high: { density: 1, dpr: 1.75, tex: 4096, shadows: true, shadowMap: 4096, aa: true, traffic: 1 },
-  mid: { density: 0.72, dpr: 1.4, tex: 2048, shadows: true, shadowMap: 2048, aa: true, traffic: 0.6 },
-  low: { density: 0.45, dpr: 1.1, tex: 2048, shadows: false, shadowMap: 1024, aa: false, traffic: 0.35 },
+  high: { density: 1, dpr: 1.5, tex: 2048, shadows: true, shadowMap: 2048, aa: true, traffic: 0.8 },
+  mid: { density: 0.7, dpr: 1.25, tex: 2048, shadows: true, shadowMap: 1536, aa: true, traffic: 0.5 },
+  low: { density: 0.45, dpr: 1, tex: 1536, shadows: false, shadowMap: 1024, aa: false, traffic: 0.3 },
 };
 
 /* ─── utilità ──────────────────────────────────────────────────────────── */
@@ -163,10 +163,12 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
   const pointer = useRef({ x: 0, y: 0 });
   const focus = useRef(new THREE.Vector3());
   const shadowTick = useRef(0);
+  const lastShadow = useRef({ elev: 0, az: 0 });
 
   useEffect(() => {
     scene.fog = fog;
-    gl.shadowMap.autoUpdate = tier === "high";
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true;
     const onMove = (e: PointerEvent) => { pointer.current.x = e.clientX / window.innerWidth - 0.5; pointer.current.y = e.clientY / window.innerHeight - 0.5; };
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => { window.removeEventListener("pointermove", onMove); scene.fog = null; };
@@ -212,7 +214,9 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
       }
       s.target.position.copy(focus.current);
       s.target.updateMatrixWorld();
-      if (tier !== "high" && (jump || ++shadowTick.current % 40 === 0)) gl.shadowMap.needsUpdate = true;
+      // ombre ricalcolate solo quando cambia il punto di vista o la luce si sposta
+      const moved = Math.abs(L.elev - lastShadow.current.elev) > 3 || Math.abs(L.az - lastShadow.current.az) > 8;
+      if (jump || ++shadowTick.current === 5 || moved) { gl.shadowMap.needsUpdate = true; lastShadow.current = { elev: L.elev, az: L.az }; }
     }
     if (hemi.current) hemi.current.intensity = lerp(0.35, 0.12, L.night);
     fog.color.copy(FOG_GOLD).lerp(FOG_DAY, day).lerp(FOG_NIGHT, L.night);
@@ -240,10 +244,10 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
         intensity={3}
         castShadow={q.shadows}
         shadow-mapSize={[q.shadowMap, q.shadowMap]}
-        shadow-camera-left={-300}
-        shadow-camera-right={300}
-        shadow-camera-top={300}
-        shadow-camera-bottom={-300}
+        shadow-camera-left={-240}
+        shadow-camera-right={240}
+        shadow-camera-top={240}
+        shadow-camera-bottom={-240}
         shadow-camera-near={10}
         shadow-camera-far={2400}
         shadow-bias={-0.0004}
@@ -255,23 +259,39 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
 
 /** Qualità adattiva: se i frame rallentano abbassa la risoluzione, se c'è margine la rialza. */
 function AdaptiveDpr({ max }: { max: number }) {
-  const { setDpr } = useThree();
-  const acc = useRef({ t: 0, n: 0, dpr: Math.min(max, window.devicePixelRatio || 1) });
+  const { setDpr, gl, scene } = useThree();
+  const acc = useRef({ t: 0, n: 0, dpr: Math.min(1, max), warm: 0, slow: 0 });
   useFrame((_, dt) => {
     const a = acc.current;
     a.t += dt; a.n++;
-    if (a.t < 1.2) return;
+    if (a.t < 1) return;
     const fps = a.n / a.t;
     a.t = 0; a.n = 0;
-    if (fps < 45 && a.dpr > 0.65) { a.dpr = Math.max(0.65, a.dpr - 0.2); setDpr(a.dpr); }
-    else if (fps > 57 && a.dpr < Math.min(max, window.devicePixelRatio || 1)) { a.dpr = Math.min(max, a.dpr + 0.1); setDpr(a.dpr); }
+    if (a.warm++ < 2) return; // ignora i primi secondi (caricamento)
+    if (fps < 48 && a.dpr > 0.6) { a.dpr = Math.max(0.6, a.dpr - 0.15); setDpr(a.dpr); }
+    else if (fps < 34 && gl.shadowMap.enabled && ++a.slow > 2) {
+      // dispositivo in difficoltà anche a risoluzione minima: spegne le ombre
+      gl.shadowMap.enabled = false;
+      scene.traverse((o) => { const m = (o as THREE.Mesh).material as THREE.Material | undefined; if (m) m.needsUpdate = true; });
+    }
+    else if (fps > 58 && a.dpr < Math.min(max, window.devicePixelRatio || 1)) { a.dpr = Math.min(max, a.dpr + 0.125); setDpr(a.dpr); }
   });
   return null;
 }
 
+/** Precompila tutti gli shader prima di mostrare la scena: niente scatti durante lo scroll. */
 function Ready() {
+  const { gl, scene, camera } = useThree();
+  const done = useRef(false);
   const n = useRef(0);
-  useFrame(() => { if (++n.current === 4) setWorldReady(); });
+  useEffect(() => {
+    let alive = true;
+    const t = setTimeout(() => {
+      gl.compileAsync(scene, camera).catch(() => undefined).then(() => { if (alive) done.current = true; });
+    }, 50);
+    return () => { alive = false; clearTimeout(t); };
+  }, [gl, scene, camera]);
+  useFrame(() => { if (done.current && ++n.current === 3) setWorldReady(); });
   return null;
 }
 
@@ -282,7 +302,7 @@ export default function WorldScene({ tier, reduced, active }: { tier: Tier; redu
     <Canvas
       frameloop={active ? "always" : "never"}
       shadows={q.shadows ? "soft" : false}
-      dpr={[0.65, q.dpr]}
+      dpr={1}
       gl={{ antialias: q.aa, powerPreference: "high-performance", stencil: false }}
       camera={{ fov: 38, near: 5, far: 6000, position: [150, 24, 520] }}
       onCreated={(state) => {

@@ -48,6 +48,8 @@ export const pinEls = new Map<string, HTMLElement>();
 /** Stato condiviso minimo. */
 export const worldInfo = { ready: false, listeners: new Set<() => void>() };
 export function setWorldReady() {
+  if (worldInfo.ready) return;
   worldInfo.ready = true;
+  (window as unknown as { __worldReadyAt?: number }).__worldReadyAt = performance.now();
   worldInfo.listeners.forEach((l) => l());
 }
