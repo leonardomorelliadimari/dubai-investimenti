@@ -42,8 +42,13 @@ const inLake = (x: number, z: number, m: number) => ((x - LAKE.x) / (LAKE.rx + m
 export const isWater = (x: number, z: number, margin = 0) =>
   z < coastZ(x) + margin || distToPolyline(x, z, CREEK) < 16 + margin || inLake(x, z, margin);
 
+/** Aree riservate ai landmark [x, z, raggio]. */
+export const RESERVED: [number, number, number][] = [[78, 62, 36], [62, -80, 18], [22, -86, 13], [128, -152, 11], [-470, -100, 8], [-205, -262, 14]];
+const reserved = (x: number, z: number) => RESERVED.some(([rx, rz, r]) => Math.hypot(x - rx, z - rz) < r + 4);
+
 /** Corridoio visivo della camera verso il Burj (niente torri davanti). */
 const inCorridor = (x: number, z: number) => distToPolyline(x, z, [[30, 70], [120, 330], [200, 700]]) < 34;
+export const distToRoad = (x: number, z: number) => Math.min(distToPolyline(x, z, SZR), distToPolyline(x, z, AL_KHAIL));
 export const nearRoad = (x: number, z: number, w = 9) =>
   distToPolyline(x, z, SZR) < w || distToPolyline(x, z, AL_KHAIL) < w;
 
@@ -92,7 +97,7 @@ export function buildTowers(density: number): Tower[] {
       tries++;
       const a = r() * Math.PI * 2, rad = Math.sqrt(r());
       const x = d.x + Math.cos(a) * d.rx * rad, z = d.z + Math.sin(a) * d.rz * rad;
-      if (isWater(x, z, 8) || nearRoad(x, z, 8) || Math.hypot(x, z) < 40 || inCorridor(x, z)) continue;
+      if (isWater(x, z, 8) || nearRoad(x, z, 8) || Math.hypot(x, z) < 40 || inCorridor(x, z) || reserved(x, z)) continue;
       if (Math.hypot(x - SITE[0], z - SITE[1]) < 34) continue;
       const w = d.fp[0] + r() * (d.fp[1] - d.fp[0]);
       const tall = d.tallChance && r() < d.tallChance;

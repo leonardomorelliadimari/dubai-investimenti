@@ -30,7 +30,7 @@ Cerca `PLACEHOLDER_` per trovare ciò che va completato (brand, contatti, testi 
 
 - `src/components/sections/*` — una sezione per file, nell'ordine della pagina (`src/app/page.tsx`).
 - `src/components/ui/*` — primitive riutilizzabili (MagneticButton, AnimatedText, CountUp, TiltCard, ScrollPhrase…).
-- `src/components/world/*` — il mondo 3D unico dietro la pagina: Dubai procedurale (Burj Khalifa, città, mare, Palm, cantiere con gru), camera guidata dallo scroll, qualità adattiva.
+- `src/components/world/*` — il mondo 3D unico dietro la pagina: cielo fisico con nuvole, Burj Khalifa, landmark (Burj Al Arab, Emirates Towers, Museum of the Future, Dubai Frame, Cayan Tower, Dubai Mall, Atlantis), città procedurale con facciate riflettenti, strade con traffico, palme, cantiere con gru. Camera guidata dallo scroll, qualità adattiva (`?q=low|mid|high` per forzarla).
 - `src/app/investimenti` — questionario investitore multi-step; `src/app/contatti` — form contatti.
 
 Le sequenze guidate dallo scroll usano `position: sticky` + `useScroll` di Framer Motion; con `prefers-reduced-motion` Lenis è disattivato e le sezioni pinned mostrano una versione statica.

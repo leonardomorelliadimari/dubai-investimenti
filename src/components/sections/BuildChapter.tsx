@@ -20,7 +20,7 @@ export function BuildChapter() {
   return (
     <section id="off-plan" ref={ref} className="relative h-[330vh]" aria-label="Off-plan" data-theme="dark">
       <div className="sticky top-0 h-[100svh] overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-white/50 to-transparent" />
+        <div className="pointer-events-none absolute -left-40 -top-40 h-[640px] w-[900px] max-w-[160vw] rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.85),rgb(255_255_255/0.5)_55%,transparent)]" />
         <div className="absolute left-5 top-24 max-w-[min(520px,90vw)] md:left-10 md:top-28">
           <RangePop p={p} at={0} from="left">
             <p className="eyebrow mb-3 text-terracotta">Off-plan</p>

@@ -7,6 +7,9 @@ import type { Tier } from "./WorldScene";
 const WorldScene = dynamic(() => import("./WorldScene"), { ssr: false });
 
 function detectTier(): Tier | "none" {
+  // ?q=low|mid|high forza la qualità (utile per test e confronti)
+  const forced = new URLSearchParams(window.location.search).get("q");
+  if (forced === "low" || forced === "mid" || forced === "high") return forced;
   try {
     const c = document.createElement("canvas");
     if (!(c.getContext("webgl2") || c.getContext("webgl"))) return "none";
