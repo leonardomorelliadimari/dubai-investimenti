@@ -1,136 +1,98 @@
 "use client";
-import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
-import { Sky as SkyImpl } from "three/examples/jsm/objects/Sky.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { seeded } from "@/lib/random";
 
 /** Stato della luce: elevazione/azimut del sole (gradi) e quanto è notte (0–1). */
-export const sunState = { elevation: 12, azimuth: 48, night: 0, sun: new THREE.Vector3() };
+export const sunState = { elevation: 40, azimuth: 48, night: 0, sun: new THREE.Vector3() };
 
-const SKY_PARAMS = { turbidity: 2.2, rayleigh: 1.6, mieCoefficient: 0.0035, mieDirectionalG: 0.86, cloudCoverage: 0.22, cloudDensity: 0.32, cloudElevation: 0.65, cloudScale: 0.00022 };
-
-function makeSky(scale: number) {
-  const sky = new SkyImpl();
-  sky.scale.setScalar(scale);
-  const u = sky.material.uniforms;
-  for (const [k, v] of Object.entries(SKY_PARAMS)) if (u[k]) u[k].value = v;
-  sky.frustumCulled = false;
-  sky.renderOrder = -10;
-  sky.material.depthWrite = false;
-  return sky;
-}
-
-const nightVert = /* glsl */ `
+const vert = /* glsl */ `
 varying vec3 vDir;
 void main() {
   vDir = normalize(position);
   vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   gl_Position = p.xyww;
 }`;
-const nightFrag = /* glsl */ `
+
+/** Cielo stilizzato: sfumatura pastello di giorno, viola-blu stellato di notte. */
+const frag = /* glsl */ `
 varying vec3 vDir;
+uniform vec3 uSun;
 uniform float uNight;
 float h21(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main() {
   vec3 d = normalize(vDir);
-  float h = max(d.y, 0.0);
-  vec3 col = mix(vec3(0.16, 0.13, 0.2), vec3(0.015, 0.03, 0.07), pow(h, 0.35));
-  col += vec3(0.55, 0.22, 0.1) * pow(1.0 - h, 10.0) * 0.5;
-  vec2 g = floor(d.xz / max(d.y, 0.05) * 260.0);
-  float st = step(0.9978, h21(g)) * smoothstep(0.1, 0.45, d.y) * (0.5 + 0.5 * h21(g + 1.0));
-  col += vec3(st);
-  gl_FragColor = vec4(col, uNight);
+  float h = clamp(d.y, 0.0, 1.0);
+  vec3 dayTop = vec3(0.30, 0.66, 0.95), dayMid = vec3(0.62, 0.84, 0.97), dayHor = vec3(1.0, 0.93, 0.80);
+  vec3 nTop = vec3(0.04, 0.05, 0.16), nMid = vec3(0.13, 0.11, 0.30), nHor = vec3(0.45, 0.28, 0.42);
+  vec3 day = mix(dayHor, mix(dayMid, dayTop, smoothstep(0.15, 0.7, h)), smoothstep(0.0, 0.18, h));
+  vec3 nig = mix(nHor, mix(nMid, nTop, smoothstep(0.1, 0.6, h)), smoothstep(0.0, 0.2, h));
+  vec3 col = mix(day, nig, uNight);
+  float s = max(dot(d, normalize(uSun)), 0.0);
+  col += vec3(1.0, 0.86, 0.55) * (pow(s, 40.0) * 0.35 + smoothstep(0.9975, 0.999, s) * 0.9) * (1.0 - uNight);
+  vec2 g = floor(d.xz / max(d.y, 0.05) * 240.0);
+  col += vec3(step(0.9975, h21(g)) * smoothstep(0.1, 0.4, d.y)) * uNight;
+  if (d.y < 0.0) col = mix(dayHor, nHor, uNight);
+  gl_FragColor = vec4(col, 1.0);
 }`;
 
-/** Cielo fisico (scattering atmosferico + nuvole), cielo notturno, e mappa di riflessi coerente. */
-export function Atmosphere() {
-  const { gl, scene } = useThree();
-  const sky = useMemo(() => makeSky(4500), []);
-  // cielo + suolo per i riflessi, creati insieme (un oggetto 3D può stare in una sola scena)
-  const { envSky, envGround, envScene } = useMemo(() => {
-    const envSky = makeSky(100);
-    const envGround = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.62, 0.5, 0.36) });
-    const envScene = new THREE.Scene();
-    envScene.add(envSky);
-    // sotto l'orizzonte: sabbia e città, non il nero del cielo fisico
-    const g = new THREE.Mesh(new THREE.CircleGeometry(400, 32), envGround);
-    g.rotation.x = -Math.PI / 2;
-    g.position.y = -2;
-    envScene.add(g);
-    return { envSky, envGround, envScene };
+/** Nuvole a sbuffo low-poly che attraversano lentamente il cielo. */
+function Clouds() {
+  const geo = useMemo(() => {
+    const r = seeded(91);
+    const parts: THREE.BufferGeometry[] = [];
+    for (let i = 0; i < 6; i++) {
+      const s = 1 - Math.abs(i - 2.5) * 0.18 + r() * 0.15;
+      const g = new THREE.IcosahedronGeometry(9 * s, 1);
+      g.translate((i - 2.5) * 9, (r() - 0.3) * 4, (r() - 0.5) * 8);
+      parts.push(g.toNonIndexed());
+    }
+    const m = mergeGeometries(parts)!;
+    m.scale(1, 0.62, 1);
+    m.computeVertexNormals();
+    return m;
   }, []);
-  const night = useMemo(
-    () => new THREE.ShaderMaterial({
-      vertexShader: nightVert, fragmentShader: nightFrag, uniforms: { uNight: { value: 0 } },
-      // nella lista opaca, subito dopo il cielo: sempre dietro a tutto il resto
-      transparent: false, blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
-      depthWrite: false, side: THREE.BackSide, fog: false,
-    }),
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 1, flatShading: true, emissive: "#dfe8ff", emissiveIntensity: 0.25, transparent: true }), []);
+  const clouds = useMemo(() => {
+    const r = seeded(4);
+    return Array.from({ length: 16 }, () => ({ x: (r() - 0.5) * 2400, z: -900 + r() * 1500, y: 150 + r() * 120, s: 0.8 + r() * 1.3, v: 2 + r() * 3 }));
+  }, []);
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const o = useMemo(() => new THREE.Object3D(), []);
+  useFrame(({ clock }) => {
+    const m = ref.current;
+    if (!m) return;
+    clouds.forEach((c, i) => {
+      const x = ((c.x + clock.elapsedTime * c.v + 3600) % 2400) - 1200;
+      o.position.set(x, c.y, c.z); o.scale.setScalar(c.s); o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    mat.opacity = 1 - sunState.night * 0.85;
+    mat.emissiveIntensity = 0.25 * (1 - sunState.night);
+  });
+  return <instancedMesh ref={ref} args={[geo, mat, clouds.length]} frustumCulled={false} />;
+}
+
+export function Atmosphere() {
+  const mat = useMemo(
+    () => new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms: { uSun: { value: new THREE.Vector3() }, uNight: { value: 0 } }, side: THREE.BackSide, depthWrite: false, fog: false }),
     [],
   );
-
-  /**
-   * Mappe di riflesso precalcolate una sola volta (alcune "ore del giorno"):
-   * rigenerarle durante l'animazione interferisce con la post-produzione.
-   */
-  const presets = useRef<{ elev: number; night: number; rt: THREE.WebGLRenderTarget }[]>([]);
-  const frames = useRef(0);
-  const todo = useRef<[number, number][]>([[14, 0], [40, 0], [4, 0], [-9, 1]]);
-  const pmremRef = useRef<THREE.PMREMGenerator | null>(null);
-  /** genera UNA mappa di riflesso per fotogramma (niente blocchi lunghi) */
-  const buildNextPreset = () => {
-    const next = todo.current.shift();
-    if (!next) { pmremRef.current?.dispose(); pmremRef.current = null; return; }
-    const pmrem = (pmremRef.current ??= new THREE.PMREMGenerator(gl));
-    const prevTarget = gl.getRenderTarget();
-    gl.setRenderTarget(null);
-    const [elev, n] = next;
-    const sun = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - elev), THREE.MathUtils.degToRad(sunState.azimuth));
-    envSky.material.uniforms.sunPosition.value.copy(sun);
-    const day = THREE.MathUtils.clamp((elev + 2) / 25, 0, 1) * (1 - n);
-    envGround.color.setRGB(0.62, 0.5, 0.36).multiplyScalar(0.08 + 0.92 * day);
-    presets.current.push({ elev, night: n, rt: pmrem.fromScene(envScene, 0, 1, 1000, { size: 128 }) });
-    gl.setRenderTarget(prevTarget);
-  };
-  const compiled = useRef(false);
-  useEffect(() => {
-    // attende che lo shader del cielo sia compilato: altrimenti i riflessi risultano spenti
-    let alive = true;
-    const cam = new THREE.PerspectiveCamera();
-    gl.compileAsync(envScene, cam).then(() => { if (alive) compiled.current = true; });
-    return () => { alive = false; presets.current.forEach((p) => p.rt.dispose()); presets.current = []; };
-  }, [gl, envScene]);
-
-  useEffect(() => () => { sky.material.dispose(); envSky.material.dispose(); night.dispose(); }, [sky, envSky, night]);
-
-  const current = useRef<THREE.Texture | null>(null);
-  useFrame(({ clock }) => {
+  useFrame(() => {
     const s = sunState;
-    const phi = THREE.MathUtils.degToRad(90 - s.elevation);
-    const theta = THREE.MathUtils.degToRad(s.azimuth);
-    s.sun.setFromSphericalCoords(1, phi, theta);
-    sky.material.uniforms.sunPosition.value.copy(s.sun);
-    sky.material.uniforms.time.value = clock.elapsedTime;
-    night.uniforms.uNight.value = s.night;
-
-    // le mappe di riflesso si calcolano dopo i primi fotogrammi (renderer pronto)
-    if (compiled.current && ++frames.current > 2 && (todo.current.length || pmremRef.current)) buildNextPreset();
-
-    // sceglie la mappa di riflesso più vicina alla luce attuale
-    let best: THREE.Texture | null = null, bd = Infinity;
-    for (const p of presets.current) {
-      const d = Math.abs(p.elev - s.elevation) / 10 + Math.abs(p.night - s.night) * 3;
-      if (d < bd) { bd = d; best = p.rt.texture; }
-    }
-    if (best && best !== current.current) { scene.environment = best; current.current = best; }
+    s.sun.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - s.elevation), THREE.MathUtils.degToRad(s.azimuth));
+    mat.uniforms.uSun.value.copy(s.sun);
+    mat.uniforms.uNight.value = s.night;
   });
-
   return (
     <>
-      <primitive object={sky} />
-      <mesh material={night} renderOrder={-9} frustumCulled={false}>
+      <mesh material={mat} renderOrder={-10} frustumCulled={false}>
         <sphereGeometry args={[4000, 32, 16]} />
       </mesh>
+      <Clouds />
     </>
   );
 }

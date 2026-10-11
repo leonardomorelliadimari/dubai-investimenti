@@ -9,7 +9,7 @@ import { facadeMaterial } from "./facade";
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const range = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
 
-export const craneMat = new THREE.MeshStandardMaterial({ color: "#f0b429", roughness: 0.5, metalness: 0.4 });
+export const craneMat = new THREE.MeshStandardMaterial({ color: "#ffc233", roughness: 0.6 });
 
 export function Crane({ x, z, base = 0, height, jib = 34, speed = 0.12, phase = 0, progressRef }: { x: number; z: number; base?: number; height: number; jib?: number; speed?: number; phase?: number; progressRef?: { current: number } }) {
   const mast = useMemo(() => buildMast(height), [height]);
@@ -36,7 +36,7 @@ export function Crane({ x, z, base = 0, height, jib = 34, speed = 0.12, phase = 
         <group ref={trolley} position={[10, 0, 0]}>
           <mesh position={[0, -0.2, 0]}><boxGeometry args={[1, 0.4, 1]} /><meshStandardMaterial color="#3b3b3b" /></mesh>
           <mesh ref={cable}><boxGeometry args={[0.05, 1, 0.05]} /><meshStandardMaterial color="#222" /></mesh>
-          <mesh ref={load} castShadow><boxGeometry args={[2.6, 0.8, 1.2]} /><meshStandardMaterial color="#7d8a93" roughness={0.6} metalness={0.5} /></mesh>
+          <mesh ref={load} castShadow><boxGeometry args={[2.6, 0.8, 1.2]} /><meshStandardMaterial color="#7d8a93" roughness={0.6} /></mesh>
         </group>
       </group>
     </group>
@@ -75,8 +75,8 @@ export function ConstructionSite({ progressRef }: { progressRef: { current: numb
   const crown = useRef<THREE.Group>(null);
   const climb = useRef<THREE.Group>(null);
   const hoistCage = useRef<THREE.Mesh>(null);
-  const glassMat = useMemo(() => facadeMaterial({ color: "#8fb6c9", roughness: 0.1, metalness: 0.6 }, { style: "glass", floorH: FH, colW: 1.05, glass: "#ffffff", litRatio: 0.3 }), []);
-  const concrete = useMemo(() => new THREE.MeshStandardMaterial({ color: "#cfcac1", roughness: 0.92 }), []);
+  const glassMat = useMemo(() => facadeMaterial({ color: "#bfe6f5" }, { style: "glass", floorH: FH, colW: 1.05, glass: "#2f8fd0", litRatio: 0.3 }), []);
+  const concrete = useMemo(() => new THREE.MeshStandardMaterial({ color: "#e4ddd2", roughness: 0.95 }), []);
   const rebar = useMemo(() => new THREE.MeshStandardMaterial({ color: "#7a4b32", roughness: 0.6, metalness: 0.6 }), []);
   const hoistMast = useMemo(() => buildMast(FLOORS * FH + 4, 1.1, 1.4), []);
   const [sx, sz] = SITE;
@@ -138,7 +138,7 @@ export function ConstructionSite({ progressRef }: { progressRef: { current: numb
       {/* area di cantiere */}
       <mesh rotation-x={-Math.PI / 2} position={[sx, 0.1, sz]} receiveShadow>
         <planeGeometry args={[72, 64]} />
-        <meshStandardMaterial color="#c49e70" roughness={1} />
+        <meshStandardMaterial color="#e8c48f" roughness={1} />
       </mesh>
       {/* recinzione con pannelli */}
       {[[0, 32, 72, 0], [0, -32, 72, 0], [36, 0, 64, Math.PI / 2], [-36, 0, 64, Math.PI / 2]].map(([x, z, l, r], i) => (
@@ -151,7 +151,7 @@ export function ConstructionSite({ progressRef }: { progressRef: { current: numb
       {[[-26, 22, "#1f6f8b"], [-26, 19.4, "#d9480f"], [-20, 22, "#f3f1ea"], [26, 24, "#2f7d4f"], [26, 21.4, "#f3f1ea"]].map(([x, z, c], i) => (
         <mesh key={i} position={[sx + (x as number), i === 1 ? 2.1 : 0.7, sz + (z as number)]} castShadow receiveShadow>
           <boxGeometry args={[5, 1.4, 2.2]} />
-          <meshStandardMaterial color={c as string} roughness={0.55} metalness={0.3} />
+          <meshStandardMaterial color={c as string} roughness={0.6} />
         </mesh>
       ))}
       {/* materiali */}
@@ -189,11 +189,11 @@ export function ConstructionSite({ progressRef }: { progressRef: { current: numb
       <group ref={crown} visible={false}>
         <mesh position={[sx, FLOORS * FH + 1.6, sz]} castShadow>
           <boxGeometry args={[13, 3.2, 13]} />
-          <meshStandardMaterial color="#dfe5e8" metalness={0.9} roughness={0.2} />
+          <meshStandardMaterial color="#dfe5e8" metalness={0.1} roughness={0.5} />
         </mesh>
         <mesh position={[sx, FLOORS * FH + 4.8, sz]} castShadow>
           <boxGeometry args={[0.4, 3.4, 0.4]} />
-          <meshStandardMaterial color="#dfe5e8" metalness={0.9} roughness={0.2} />
+          <meshStandardMaterial color="#dfe5e8" metalness={0.1} roughness={0.5} />
         </mesh>
       </group>
 

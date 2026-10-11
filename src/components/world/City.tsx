@@ -7,14 +7,16 @@ import { seeded } from "@/lib/random";
 
 type Part = { x: number; y: number; z: number; sx: number; sy: number; sz: number; ry?: number; c: number };
 
-const GLASS_COLS = [0x6f97b0, 0x5f8ea0, 0x7fa9bd, 0x4e7f95, 0x8db3c4, 0x6d9a8f, 0x93a9b8];
-const STONE = [0xf4efe6, 0xeee3d0, 0xf7f3ec, 0xe6dccb, 0xfaf6ee, 0xe9e2d6];
+// palette "plastico": torri vetrate in toni freschi, residenziali in pastelli caldi
+const GLASS_COLS = [0x7cc6e8, 0x8fd8d2, 0xa9c8f0, 0x6fb7d9, 0xb7e3f2, 0x9fc9b4, 0xc3b6ea, 0x86c5c9];
+const STONE = [0xfbe3c4, 0xf7c9b5, 0xfff1d6, 0xf3d9e6, 0xe2efd9, 0xfde8b0, 0xf5f0e6, 0xe8dcf5];
 
 function split(towers: Tower[]) {
   const r = seeded(99);
   const out = {
     podium: [] as Part[], glassBox: [] as Part[], glassOct: [] as Part[], glassRound: [] as Part[],
     resBox: [] as Part[], crown: [] as Part[], roof: [] as Part[], villa: [] as Part[], fins: [] as Part[],
+    antenna: [] as Part[], pad: [] as Part[], garden: [] as Part[], tank: [] as Part[],
   };
   for (const t of towers) {
     if (t.h < 4) {
@@ -35,18 +37,22 @@ function split(towers: Tower[]) {
       else out.glassBox.push(shaft);
       if (crownH) {
         const k = shape === "box" ? 0.74 : 0.5;
-        out.crown.push({ x: t.x, y: t.h - crownH / 2, z: t.z, sx: t.w * k, sy: crownH, sz: (shape === "box" ? t.d : t.w) * k, ry, c: 0xc9d1d6 });
+        out.crown.push({ x: t.x, y: t.h - crownH / 2, z: t.z, sx: t.w * k, sy: crownH, sz: (shape === "box" ? t.d : t.w) * k, ry, c: [0xffffff, 0xffd27a, 0xff9e7a, 0xe9eef2][Math.floor(r() * 4)] });
         // pinne verticali sul coronamento (dettaglio tipico delle torri del Golfo)
-        if (shape === "box" && r() < 0.5) out.fins.push({ x: t.x, y: t.h + 1.2, z: t.z, sx: t.w * 0.08, sy: 2.6, sz: t.d * 0.9, ry, c: 0xe2e6e8 });
+        if (shape === "box" && r() < 0.5) out.fins.push({ x: t.x, y: t.h + 1.2, z: t.z, sx: t.w * 0.08, sy: 2.6, sz: t.d * 0.9, ry, c: 0xffffff });
       }
     } else {
       out.resBox.push(shaft);
     }
-    // impianti sul tetto
+    // dettagli sul tetto: impianti, antenne, eliporti, giardini pensili, serbatoi
     const n = 1 + Math.floor(r() * 3);
     for (let i = 0; i < n; i++) {
-      out.roof.push({ x: t.x + (r() - 0.5) * t.w * 0.5, y: t.h + 0.35, z: t.z + (r() - 0.5) * t.d * 0.5, sx: 0.6 + r() * 1.4, sy: 0.7, sz: 0.6 + r(), ry, c: 0xb9bcbd });
+      out.roof.push({ x: t.x + (r() - 0.5) * t.w * 0.5, y: t.h + 0.35, z: t.z + (r() - 0.5) * t.d * 0.5, sx: 0.6 + r() * 1.4, sy: 0.7, sz: 0.6 + r(), ry, c: [0xd9dde2, 0xc9ced6, 0xffffff][i % 3] });
     }
+    if (t.h > 30 && r() < 0.6) out.antenna.push({ x: t.x, y: t.h + 3, z: t.z, sx: 0.12, sy: 6, sz: 0.12, c: 0xff6b5b });
+    else if (t.h > 22 && r() < 0.35) out.pad.push({ x: t.x, y: t.h + 0.2, z: t.z, sx: Math.min(t.w, t.d) * 0.36, sy: 0.25, sz: Math.min(t.w, t.d) * 0.36, c: 0x3d4a5c });
+    if (!glass && r() < 0.55) out.garden.push({ x: t.x + (r() - 0.5) * t.w * 0.3, y: t.h + 0.3, z: t.z + (r() - 0.5) * t.d * 0.3, sx: t.w * 0.45, sy: 0.6, sz: t.d * 0.4, c: [0x7fcf6a, 0x5fbf72, 0x9ad66b][Math.floor(r() * 3)] });
+    if (!glass && r() < 0.4) out.tank.push({ x: t.x - t.w * 0.25, y: t.h + 0.9, z: t.z + t.d * 0.2, sx: 0.7, sy: 1.6, sz: 0.7, c: 0xf2f2f2 });
   }
   return out;
 }
@@ -74,15 +80,17 @@ export function City({ density }: { density: number }) {
   const geo = useMemo(() => ({
     box: new THREE.BoxGeometry(1, 1, 1),
     oct: new THREE.CylinderGeometry(1, 1, 1, 8).rotateY(Math.PI / 8),
-    round: new THREE.CylinderGeometry(1, 1, 1, 28),
+    round: new THREE.CylinderGeometry(1, 1, 1, 16),
+    rod: new THREE.CylinderGeometry(1, 1, 1, 6),
+    disc: new THREE.CylinderGeometry(1, 1, 1, 18),
   }), []);
   const mats = useMemo(() => ({
-    glass: facadeMaterial({ color: "#ffffff", roughness: 0.35, metalness: 0.35 }, { style: "glass", floorH: 0.95, colW: 0.9, glass: "#ffffff", litRatio: 0.28 }),
-    res: facadeMaterial({ color: "#ffffff", roughness: 0.7, metalness: 0.05 }, { style: "residential", floorH: 1.0, colW: 1.25, glass: "#56717f", litRatio: 0.34 }),
-    podium: facadeMaterial({ color: "#ffffff", roughness: 0.6, metalness: 0.1 }, { style: "glass", floorH: 1.4, colW: 1.8, glass: "#2f4552", litRatio: 0.5 }),
-    villa: facadeMaterial({ color: "#ffffff", roughness: 0.8, metalness: 0 }, { style: "residential", floorH: 1.1, colW: 1.6, glass: "#384c56", litRatio: 0.4 }),
-    metal: new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.25, metalness: 0.9 }),
-    roof: new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.75, metalness: 0.2 }),
+    glass: facadeMaterial({ color: "#ffffff" }, { style: "glass", floorH: 0.95, colW: 0.9, glass: "#3f8fc2", litRatio: 0.3 }),
+    res: facadeMaterial({ color: "#ffffff" }, { style: "residential", floorH: 1.0, colW: 1.25, glass: "#5b86a8", litRatio: 0.36 }),
+    podium: facadeMaterial({ color: "#ffffff" }, { style: "glass", floorH: 1.4, colW: 1.8, glass: "#3a6f8f", litRatio: 0.5 }),
+    villa: facadeMaterial({ color: "#ffffff" }, { style: "residential", floorH: 1.1, colW: 1.6, glass: "#5b86a8", litRatio: 0.4 }),
+    metal: new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.5, metalness: 0.1 }),
+    roof: new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.85 }),
   }), []);
 
   return (
@@ -96,6 +104,10 @@ export function City({ density }: { density: number }) {
       <Instances parts={parts.fins} geometry={geo.box} material={mats.metal} shadows={false} />
       <Instances parts={parts.roof} geometry={geo.box} material={mats.roof} shadows={false} />
       <Instances parts={parts.villa} geometry={geo.box} material={mats.villa} />
+      <Instances parts={parts.antenna} geometry={geo.rod} material={mats.roof} shadows={false} />
+      <Instances parts={parts.pad} geometry={geo.disc} material={mats.roof} shadows={false} />
+      <Instances parts={parts.garden} geometry={geo.box} material={mats.roof} shadows={false} />
+      <Instances parts={parts.tank} geometry={geo.disc} material={mats.roof} shadows={false} />
     </group>
   );
 }

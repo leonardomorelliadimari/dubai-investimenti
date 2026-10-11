@@ -47,7 +47,7 @@ function BurjAlArab() {
     return mergeGeometries(parts)!;
   }, []);
   const sailMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#fbfbf8", roughness: 0.45, metalness: 0, side: THREE.DoubleSide, emissive: "#ffffff", emissiveIntensity: 0 }), []);
-  const glassMat = useMemo(() => facadeMaterial({ color: "#9fbccb", roughness: 0.2, metalness: 0.6 }, { style: "landmark", floorH: 0.9, colW: 0.8, glass: "#ffffff", litRatio: 0.55 }), []);
+  const glassMat = useMemo(() => facadeMaterial({ color: "#e9f3f8" }, { style: "landmark", floorH: 0.9, colW: 0.8, glass: "#5bb4e0", litRatio: 0.55 }), []);
   const hue = useMemo(() => new THREE.Color(), []);
   useFrame(({ clock }) => {
     const n = facadeUniforms.uNight.value;
@@ -59,7 +59,7 @@ function BurjAlArab() {
     <group position={[-205, 0, -262]} rotation-y={Math.PI * 0.86}>
       <mesh position={[0, -0.4, 0]} receiveShadow>
         <cylinderGeometry args={[11, 12, 1.2, 40]} />
-        <meshStandardMaterial color="#ead7b2" roughness={0.9} />
+        <meshStandardMaterial color="#f6dfb2" roughness={0.9} />
       </mesh>
       <mesh geometry={sail} material={sailMat} castShadow position={[0, 0.2, 0]} />
       <mesh geometry={body} material={glassMat} castShadow />
@@ -68,7 +68,7 @@ function BurjAlArab() {
 }
 
 function EmiratesTowers() {
-  const mat = useMemo(() => facadeMaterial({ color: "#b8c7d0", roughness: 0.15, metalness: 0.85 }, { style: "landmark", floorH: 0.55, colW: 0.6, glass: "#ffffff", litRatio: 0.4 }), []);
+  const mat = useMemo(() => facadeMaterial({ color: "#d9e6f2" }, { style: "landmark", floorH: 0.55, colW: 0.6, glass: "#3f7fb8", litRatio: 0.4 }), []);
   return (
     <group position={[58, 0, -86]}>
       {[[0, 0, 36], [9, 9, 31]].map(([x, z, h], i) => (
@@ -86,13 +86,13 @@ function EmiratesTowers() {
 }
 
 function MuseumOfTheFuture() {
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#e6eaec", roughness: 0.18, metalness: 1, emissive: "#9fd0ff", emissiveIntensity: 0 }), []);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#dfe9f1", roughness: 0.4, metalness: 0.2, emissive: "#9fd0ff", emissiveIntensity: 0, flatShading: true }), []);
   useFrame(() => { mat.emissiveIntensity = facadeUniforms.uNight.value * 0.35; });
   return (
     <group position={[22, 0, -86]} rotation-y={0.5}>
       <mesh position={[0, 1, 0]} receiveShadow>
         <sphereGeometry args={[9, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#6f9a4c" roughness={0.95} />
+        <meshStandardMaterial color="#7fcf6a" roughness={0.95} flatShading />
       </mesh>
       <mesh position={[0, 8.6, 0]} scale={[1, 1.3, 0.75]} material={mat} castShadow>
         <torusGeometry args={[4.6, 1.75, 24, 64]} />
@@ -102,7 +102,7 @@ function MuseumOfTheFuture() {
 }
 
 function DubaiFrame() {
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#d8b25a", roughness: 0.28, metalness: 1, emissive: "#ffcc66", emissiveIntensity: 0 }), []);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#f2c14e", roughness: 0.4, metalness: 0.15, emissive: "#ffcc66", emissiveIntensity: 0 }), []);
   useFrame(() => { mat.emissiveIntensity = facadeUniforms.uNight.value * 0.5; });
   return (
     <group position={[128, 0, -152]} rotation-y={0.6}>
@@ -125,23 +125,23 @@ function CayanTower() {
     }
     return mergeGeometries(parts)!;
   }, []);
-  const mat = useMemo(() => facadeMaterial({ color: "#a9c4d2", roughness: 0.15, metalness: 0.7 }, { style: "landmark", floorH: 0.78, colW: 0.7, glass: "#ffffff", litRatio: 0.45 }), []);
+  const mat = useMemo(() => facadeMaterial({ color: "#9fdcd0" }, { style: "landmark", floorH: 0.78, colW: 0.7, glass: "#2f8f9f", litRatio: 0.45 }), []);
   return <mesh geometry={geo} material={mat} position={[-470, 0, -100]} castShadow receiveShadow />;
 }
 
 function DubaiMall() {
-  const mat = useMemo(() => facadeMaterial({ color: "#efe6d6", roughness: 0.6, metalness: 0.05 }, { style: "residential", floorH: 1.6, colW: 2.4, glass: "#2b3e48", litRatio: 0.6 }), []);
+  const mat = useMemo(() => facadeMaterial({ color: "#fbe7c8" }, { style: "residential", floorH: 1.6, colW: 2.4, glass: "#4f86a8", litRatio: 0.6 }), []);
   return (
     <group position={[78, 0, 62]}>
       <mesh position={[0, 3, 0]} material={mat} castShadow receiveShadow><boxGeometry args={[58, 6, 30]} /></mesh>
-      <mesh position={[0, 6.4, 0]} castShadow><boxGeometry args={[46, 0.8, 4]} /><meshStandardMaterial color="#cfe0e8" roughness={0.1} metalness={0.8} /></mesh>
+      <mesh position={[0, 6.4, 0]} castShadow><boxGeometry args={[46, 0.8, 4]} /><meshStandardMaterial color="#9fd6ee" roughness={0.4} /></mesh>
       <mesh position={[-18, 5, 16]} castShadow material={mat}><boxGeometry args={[14, 10, 8]} /></mesh>
     </group>
   );
 }
 
 function Atlantis() {
-  const mat = useMemo(() => facadeMaterial({ color: "#f0cfa6", roughness: 0.6, metalness: 0.05 }, { style: "residential", floorH: 0.8, colW: 0.9, glass: "#33505c", litRatio: 0.55 }), []);
+  const mat = useMemo(() => facadeMaterial({ color: "#f7b2a0" }, { style: "residential", floorH: 0.8, colW: 0.9, glass: "#4d7fa3", litRatio: 0.55 }), []);
   const z = PALM.crescentZ - PALM.crescentR + 2;
   return (
     <group position={[PALM.x, 0, z]}>

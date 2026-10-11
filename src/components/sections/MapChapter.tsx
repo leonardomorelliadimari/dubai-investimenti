@@ -43,13 +43,13 @@ export function MapChapter() {
   const price = Array.isArray(a.priceSqftAed) ? a.priceSqftAed.map(sqftAedToSqmEur) as [number, number] : sqftAedToSqmEur(a.priceSqftAed);
 
   return (
-    <section id="aree" ref={ref} className="relative h-[260vh]" aria-label="Le aree di Dubai" data-theme="dark">
+    <section id="aree" ref={ref} className="relative h-[260vh]" aria-label="Le aree di Dubai">
       <div className="sticky top-0 h-[100svh] overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-black/30 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-white/70 to-transparent" />
         <div className="absolute left-5 top-24 z-10 md:left-10 md:top-28">
           <RangePop p={p} at={0} from="left">
-            <p className="eyebrow mb-3 text-white/90">Le aree</p>
-            <h2 className="display max-w-[12ch] text-[clamp(2rem,4.4vw,4.25rem)] text-white [text-shadow:0_2px_30px_rgb(0_0_0/0.3)]">Una città, molti mercati.</h2>
+            <p className="eyebrow mb-3 text-terracotta">Le aree</p>
+            <h2 className="display max-w-[12ch] text-[clamp(2rem,4.4vw,4.25rem)] text-ink">Una città, molti mercati.</h2>
           </RangePop>
         </div>
 

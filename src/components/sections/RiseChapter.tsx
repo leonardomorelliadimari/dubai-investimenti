@@ -8,12 +8,12 @@ export function RiseChapter() {
   const { ref, p } = useChapter("rise");
   const step = 0.165;
   return (
-    <section id="perche-dubai" ref={ref} className="relative h-[400vh]" aria-label="Perché proprio Dubai" data-theme="dark">
+    <section id="perche-dubai" ref={ref} className="relative h-[400vh]" aria-label="Perché proprio Dubai">
       <div className="sticky top-0 h-[100svh] overflow-hidden">
         <div className="absolute left-5 top-24 md:left-10 md:top-28">
           <RangePop p={p} at={0.0} from="left">
-            <p className="eyebrow mb-3 text-white/85">Perché proprio Dubai?</p>
-            <h2 className="display max-w-[11ch] text-[clamp(2rem,4.4vw,4.25rem)] text-white [text-shadow:0_2px_30px_rgb(0_0_0/0.25)]">Cinque numeri, salendo.</h2>
+            <p className="eyebrow mb-3 text-terracotta">Perché proprio Dubai?</p>
+            <h2 className="display max-w-[11ch] text-[clamp(2rem,4.4vw,4.25rem)] text-ink [text-shadow:0_2px_30px_rgb(255_255_255/0.8)]">Cinque numeri, salendo.</h2>
           </RangePop>
         </div>
 

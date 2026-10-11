@@ -19,14 +19,14 @@ function roadTexture(median: boolean) {
   const cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
   const c = cv.getContext("2d")!;
-  c.fillStyle = "#3a3c40"; c.fillRect(0, 0, W, H);
+  c.fillStyle = "#4a5160"; c.fillRect(0, 0, W, H);
   const r = seeded(5);
   for (let i = 0; i < 9000; i++) { c.fillStyle = r() > 0.5 ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.08)"; c.fillRect(r() * W, r() * H, 1.5, 1.5); }
   c.fillStyle = "#e9e6dc";
   c.fillRect(W * 0.03, 0, 3, H); c.fillRect(W * 0.97 - 3, 0, 3, H);
   if (median) {
     c.fillStyle = "#c9c2b2"; c.fillRect(W * 0.46, 0, W * 0.08, H);
-    c.fillStyle = "#6f8f45"; c.fillRect(W * 0.47, 0, W * 0.06, H);
+    c.fillStyle = "#7fcf6a"; c.fillRect(W * 0.47, 0, W * 0.06, H);
   }
   c.fillStyle = "rgba(240,238,230,0.85)";
   const lanes = median ? [0.135, 0.245, 0.355, 0.645, 0.755, 0.865] : [0.25, 0.5, 0.75];
@@ -80,7 +80,7 @@ function carGeometries() {
   return { body, lights: mergeGeometries(lightsParts)! };
 }
 
-const CAR_COLS = [0xf3f3f1, 0xd9dcdf, 0x1d1f22, 0x8c9399, 0xf3f3f1, 0x2b3f5c, 0xb3261e, 0xe8e2d4, 0x4a4f55];
+const CAR_COLS = [0xffffff, 0xff6b5b, 0x4aa3df, 0xffd166, 0x2fbf8f, 0xf4f4f4, 0x8e7cf0, 0xff9f43, 0x3d4a5c];
 
 type Car = { road: number; s: number; speed: number; lane: number; dir: 1 | -1 };
 
@@ -101,7 +101,7 @@ function Traffic({ curves, density }: { curves: { curve: THREE.CatmullRomCurve3;
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const lightRef = useRef<THREE.InstancedMesh>(null);
   const lightMat = useMemo(() => new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, toneMapped: false }), []);
-  const bodyMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.25, metalness: 0.6 }), []);
+  const bodyMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.45, metalness: 0.05, flatShading: true }), []);
   useLayoutEffect(() => {
     const c = new THREE.Color();
     cars.forEach((_, i) => bodyRef.current!.setColorAt(i, c.setHex(CAR_COLS[i % CAR_COLS.length])));
@@ -170,7 +170,7 @@ function StreetLights({ curves }: { curves: { curve: THREE.CatmullRomCurve3; len
     new THREE.BoxGeometry(0.9, 0.05, 0.05).translate(0.45, 3.15, 0).toNonIndexed(),
   ])!, []);
   const head = useMemo(() => new THREE.BoxGeometry(0.35, 0.08, 0.16).translate(0.85, 3.1, 0), []);
-  const poleMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#c9ccce", roughness: 0.4, metalness: 0.8 }), []);
+  const poleMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#e8ecef", roughness: 0.6 }), []);
   const headMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#eeeeee", emissive: "#ffb766", emissiveIntensity: 0 }), []);
   const a = useRef<THREE.InstancedMesh>(null), b = useRef<THREE.InstancedMesh>(null);
   useLayoutEffect(() => {
@@ -208,15 +208,15 @@ export function Palms({ density }: { density: number }) {
     for (let i = 0; i < 8; i++) push(SITE[0] - 30 + i * 8, SITE[1] + 38);
     return out;
   }, [density]);
-  const trunkMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#8b6a4b", roughness: 0.95 }), []);
-  const leafMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#5d8c33", roughness: 0.7, side: THREE.DoubleSide }), []);
+  const trunkMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#b07a4f", roughness: 0.95, flatShading: true }), []);
+  const leafMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#5fc24a", roughness: 0.8, side: THREE.DoubleSide, flatShading: true }), []);
   const a = useRef<THREE.InstancedMesh>(null), b = useRef<THREE.InstancedMesh>(null);
   useLayoutEffect(() => {
     const o = new THREE.Object3D(), c = new THREE.Color();
     spots.forEach((q, i) => {
       o.position.set(q.x, 0, q.z); o.rotation.set(0, q.ry, 0); o.scale.setScalar(q.s); o.updateMatrix();
       a.current!.setMatrixAt(i, o.matrix); b.current!.setMatrixAt(i, o.matrix);
-      b.current!.setColorAt(i, c.setHSL(0.24 + (i % 5) * 0.012, 0.5, 0.32 + (i % 3) * 0.04));
+      b.current!.setColorAt(i, c.setHSL(0.27 + (i % 5) * 0.015, 0.62, 0.42 + (i % 3) * 0.05));
     });
     for (const m of [a.current!, b.current!]) { m.instanceMatrix.needsUpdate = true; m.computeBoundingSphere(); }
     if (b.current!.instanceColor) b.current!.instanceColor.needsUpdate = true;

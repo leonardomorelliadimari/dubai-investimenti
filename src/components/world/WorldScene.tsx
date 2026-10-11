@@ -11,6 +11,7 @@ import { City } from "./City";
 import { Landmarks } from "./Landmarks";
 import { Palms, Streets } from "./Streets";
 import { ConstructionSite, Crane } from "./Site";
+import { Boats, Trees } from "./Props";
 import { currentChapter, mapFocus, pinEls, setWorldReady, type ChapterId } from "./store";
 
 export type Tier = "high" | "mid" | "low";
@@ -39,7 +40,7 @@ function shot(id: ChapterId, p: number, aspect: number, out: Shot) {
       const e = ease(p);
       out.pos.set(lerp(150, 62, e) * k, lerp(24, 9, e), lerp(520, 140, e) * k);
       out.look.set(0, lerp(40, 48, e), 0);
-      out.elev = lerp(15, 16, p); out.az = 48; out.focus = [0, 0];
+      out.elev = lerp(34, 36, p); out.az = 48; out.focus = [0, 0];
       break;
     }
     case "rise": {
@@ -48,7 +49,7 @@ function shot(id: ChapterId, p: number, aspect: number, out: Shot) {
       const r = lerp(Math.hypot(62, 140), 52, ease(Math.min(1, p * 1.6))) * (narrow ? 1.25 : 1);
       out.pos.set(Math.sin(a) * r, lerp(9, 100, e), Math.cos(a) * r);
       out.look.set(0, lerp(48, 80, e), 0);
-      out.elev = lerp(14, 22, p); out.az = lerp(48, 128, ease(p)); out.focus = [0, 0];
+      out.elev = lerp(36, 46, p); out.az = lerp(48, 128, ease(p)); out.focus = [0, 0];
       break;
     }
     case "map": {
@@ -62,7 +63,7 @@ function shot(id: ChapterId, p: number, aspect: number, out: Shot) {
         out.look.set(-110, 0, -40);
         out.focus = [-110, -40];
       }
-      out.elev = 46; out.az = 165;
+      out.elev = 56; out.az = 165;
       break;
     }
     case "build": {
@@ -71,7 +72,7 @@ function shot(id: ChapterId, p: number, aspect: number, out: Shot) {
       const r = lerp(160, 118, e) * k;
       out.pos.set(SITE[0] + Math.sin(a) * r, lerp(34, 62, e), SITE[1] + Math.cos(a) * r);
       out.look.set(SITE[0] - 10, lerp(16, 26, e), SITE[1]);
-      out.elev = 34; out.az = 125; out.focus = [SITE[0], SITE[1]];
+      out.elev = 46; out.az = 125; out.focus = [SITE[0], SITE[1]];
       break;
     }
     case "night": {
@@ -93,7 +94,7 @@ function Ground({ tex, density }: { tex: number; density: number }) {
   const detail = useMemo(() => makeDetailTexture(), []);
   const water = useMemo(() => makeWaterNormal(), []);
   const landMat = useMemo(() => {
-    const m = new THREE.MeshStandardMaterial({ map: day, emissiveMap: night, emissive: "#ffffff", emissiveIntensity: 0, alphaTest: 0.5, roughness: 0.95 });
+    const m = new THREE.MeshStandardMaterial({ map: day, emissiveMap: night, emissive: "#ffffff", emissiveIntensity: 0, alphaTest: 0.5, roughness: 1 });
     m.onBeforeCompile = (s) => {
       s.uniforms.uDetail = { value: detail };
       s.fragmentShader = s.fragmentShader
@@ -102,7 +103,7 @@ function Ground({ tex, density }: { tex: number; density: number }) {
     };
     return m;
   }, [day, night, detail]);
-  const waterMat = useMemo(() => clampMaterial(new THREE.MeshStandardMaterial({ color: "#1592a2", roughness: 0.2, metalness: 0, normalMap: water, normalScale: new THREE.Vector2(0.12, 0.12), envMapIntensity: 1.15 })), [water]);
+  const waterMat = useMemo(() => clampMaterial(new THREE.MeshStandardMaterial({ color: "#2fc0d6", roughness: 0.42, metalness: 0, normalMap: water, normalScale: new THREE.Vector2(0.3, 0.3) })), [water]);
   useFrame((_, dt) => {
     landMat.emissiveIntensity = facadeUniforms.uNight.value * 1.6;
     water.offset.x += dt * 0.006;
@@ -116,7 +117,7 @@ function Ground({ tex, density }: { tex: number; density: number }) {
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.3, 2400]}>
         <planeGeometry args={[9000, 2800]} />
-        <meshStandardMaterial color="#e2bf88" roughness={1} />
+        <meshStandardMaterial color="#f2d29e" roughness={1} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.5, 0]} material={waterMat} receiveShadow>
         <planeGeometry args={[9000, 9000]} />
@@ -127,7 +128,7 @@ function Ground({ tex, density }: { tex: number; density: number }) {
 
 function Burj() {
   const geo = useMemo(buildBurjGeometry, []);
-  const mat = useMemo(() => facadeMaterial({ color: "#c7d5de", roughness: 0.2, metalness: 0.75 }, { style: "landmark", floorH: 0.55, colW: 0.42, glass: "#ffffff", litRatio: 0.45 }), []);
+  const mat = useMemo(() => facadeMaterial({ color: "#f1f6fa", roughness: 0.55 }, { style: "landmark", floorH: 0.55, colW: 0.42, glass: "#4aa7d8", litRatio: 0.45 }), []);
   const beacon = useRef<THREE.MeshBasicMaterial>(null);
   useFrame(({ clock }) => {
     if (beacon.current) beacon.current.opacity = facadeUniforms.uNight.value * (0.55 + 0.45 * Math.sin(clock.elapsedTime * 2.4));
@@ -144,10 +145,8 @@ function Burj() {
 }
 
 /* ─── regia: camera, sole, nebbia, ombre, pin ──────────────────────────── */
-const FOG_DAY = new THREE.Color("#cfe0ec"), FOG_GOLD = new THREE.Color("#f2d3b0"), FOG_NIGHT = new THREE.Color("#141d2e");
-/** Intensità dei riflessi/luce ambientale del cielo (il cielo fisico è molto luminoso). */
-const ENV_DAY = Number(typeof window !== "undefined" && new URLSearchParams(window.location.search).get("env")) || 0.15;
-const SUN_LOW = new THREE.Color("#ffb57a"), SUN_HIGH = new THREE.Color("#fff3e2"), MOON = new THREE.Color("#93a8d6");
+const FOG_DAY = new THREE.Color("#e3f2fb"), FOG_GOLD = new THREE.Color("#fdeedd"), FOG_NIGHT = new THREE.Color("#2a2245");
+const SUN_LOW = new THREE.Color("#ffd9a6"), SUN_HIGH = new THREE.Color("#fff6e8"), MOON = new THREE.Color("#a9b8ff");
 
 function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildProgress: { current: number }; tier: Tier }) {
   const { camera, scene, gl, size } = useThree();
@@ -164,6 +163,7 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
   const focus = useRef(new THREE.Vector3());
   const shadowTick = useRef(0);
   const lastShadow = useRef({ elev: 0, az: 0 });
+  const shadowBurst = useRef(4);
 
   useEffect(() => {
     scene.fog = fog;
@@ -208,7 +208,7 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
         s.position.set(focus.current.x + 300, 600, focus.current.z + 200);
       } else {
         s.color.copy(SUN_LOW).lerp(SUN_HIGH, day);
-        s.intensity = lerp(2.6, 3.4, day) * (1 - L.night);
+        s.intensity = lerp(2.3, 2.7, day) * (1 - L.night);
         s.position.copy(sunState.sun).multiplyScalar(900).add(focus.current);
         s.position.y = Math.max(s.position.y, 70);
       }
@@ -216,13 +216,17 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
       s.target.updateMatrixWorld();
       // ombre ricalcolate solo quando cambia il punto di vista o la luce si sposta
       const moved = Math.abs(L.elev - lastShadow.current.elev) > 3 || Math.abs(L.az - lastShadow.current.az) > 8;
-      if (jump || ++shadowTick.current === 5 || moved) { gl.shadowMap.needsUpdate = true; lastShadow.current = { elev: L.elev, az: L.az }; }
+      if (jump) shadowBurst.current = 4;
+      if (shadowBurst.current > 0 || ++shadowTick.current === 5 || moved) {
+        shadowBurst.current = Math.max(0, shadowBurst.current - 1);
+        gl.shadowMap.needsUpdate = true;
+        lastShadow.current = { elev: L.elev, az: L.az };
+      }
     }
-    if (hemi.current) hemi.current.intensity = lerp(0.35, 0.12, L.night);
+    if (hemi.current) hemi.current.intensity = lerp(1.35, 0.45, L.night);
     fog.color.copy(FOG_GOLD).lerp(FOG_DAY, day).lerp(FOG_NIGHT, L.night);
     const far = ch.id === "map" ? 9000 : lerp(5200, 3600, L.night);
     fog.near = 700; fog.far = lerp(fog.far, far, k);
-    scene.environmentIntensity = lerp(ENV_DAY, ENV_DAY * 0.25, L.night);
 
     if (ch.id === "map") {
       pinEls.forEach((el, id) => {
@@ -238,7 +242,7 @@ function Director({ reduced, buildProgress, tier }: { reduced: boolean; buildPro
   const q = Q[tier];
   return (
     <>
-      <hemisphereLight ref={hemi} args={["#cfe3f2", "#c9a77c", 0.35]} />
+      <hemisphereLight ref={hemi} args={["#cfe8ff", "#ffd7b0", 1.35]} />
       <directionalLight
         ref={sun}
         intensity={3}
@@ -308,8 +312,8 @@ export default function WorldScene({ tier, reduced, active }: { tier: Tier; redu
       onCreated={(state) => {
         const { gl } = state;
         if (process.env.NODE_ENV !== "production") (window as unknown as { __r3f: unknown }).__r3f = state;
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.08;
+        gl.toneMapping = THREE.NeutralToneMapping;
+        gl.toneMappingExposure = 1.0;
       }}
       aria-hidden
     >
@@ -321,6 +325,8 @@ export default function WorldScene({ tier, reduced, active }: { tier: Tier; redu
       <Landmarks />
       <Streets density={q.traffic} />
       <Palms density={q.density} />
+      <Trees density={q.density} />
+      <Boats density={q.density} />
       <ConstructionSite progressRef={buildProgress} />
       <Crane x={150} z={-20} height={52} jib={32} speed={0.1} phase={1} />
       <Crane x={-440} z={-40} height={60} jib={34} speed={0.08} phase={3} />

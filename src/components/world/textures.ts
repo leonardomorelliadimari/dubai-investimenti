@@ -19,7 +19,7 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
   const day = document.createElement("canvas");
   day.width = W; day.height = H;
   const c = day.getContext("2d")!;
-  c.fillStyle = "#dcb886";
+  c.fillStyle = "#f3d39f";
   c.fillRect(0, 0, W, H);
   // grana del deserto
   for (let i = 0; i < (W * H) / 360; i++) {
@@ -30,8 +30,8 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
   const urban: [number, number, number][] = [[10, -20, 180], [110, -45, 110], [-505, -60, 140], [-420, 90, 120], [-170, 115, 130], [340, -250, 100], [-650, 70, 160], [230, 60, 160], [-250, 20, 140]];
   for (const [x, z, rad] of urban) {
     const g = c.createRadialGradient(px(x), pz(z), 0, px(x), pz(z), rad * sx);
-    g.addColorStop(0, "rgba(212,200,182,0.95)");
-    g.addColorStop(1, "rgba(212,200,182,0)");
+    g.addColorStop(0, "rgba(236,226,210,0.95)");
+    g.addColorStop(1, "rgba(236,226,210,0)");
     c.fillStyle = g;
     c.fillRect(px(x - rad), pz(z - rad), rad * 2 * sx, rad * 2 * sx);
     // isolati
@@ -43,7 +43,7 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
     }
   }
   // verde (Dubai Hills, parchi)
-  c.fillStyle = "rgba(92,150,62,0.9)";
+  c.fillStyle = "rgba(120,205,95,0.95)";
   c.beginPath(); c.ellipse(px(-175), pz(140), 55 * sx, 22 * sx, -0.3, 0, Math.PI * 2); c.fill();
   c.beginPath(); c.ellipse(px(-130), pz(80), 18 * sx, 10 * sx, 0, 0, Math.PI * 2); c.fill();
   // parcheggi, giardini e piscine nei quartieri (dettaglio visibile dall'alto)
@@ -61,8 +61,8 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
   for (const t of towers) {
     const rad = (Math.max(t.w, t.d) * 0.5 + Math.min(10, 1.5 + t.h * 0.12)) * sx;
     const g = c.createRadialGradient(px(t.x), pz(t.z), rad * 0.25, px(t.x), pz(t.z), rad);
-    g.addColorStop(0, `rgba(60,45,30,${Math.min(0.5, 0.18 + t.h * 0.008)})`);
-    g.addColorStop(1, "rgba(60,45,30,0)");
+    g.addColorStop(0, `rgba(90,80,140,${Math.min(0.32, 0.12 + t.h * 0.005)})`);
+    g.addColorStop(1, "rgba(90,80,140,0)");
     c.fillStyle = g;
     c.fillRect(px(t.x) - rad, pz(t.z) - rad, rad * 2, rad * 2);
   }
@@ -70,9 +70,9 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
   c.strokeStyle = "#f7e7c6"; c.lineWidth = 16 * sx; c.lineCap = "round"; c.lineJoin = "round";
   path(c, COAST); c.stroke();
   // strade principali
-  c.strokeStyle = "#75736f"; c.lineWidth = 9 * sx; path(c, SZR); c.stroke();
+  c.strokeStyle = "#5b6272"; c.lineWidth = 9 * sx; path(c, SZR); c.stroke();
   c.strokeStyle = "#e9e4da"; c.lineWidth = 0.8 * sx; c.setLineDash([3 * sx, 3 * sx]); path(c, SZR); c.stroke(); c.setLineDash([]);
-  c.strokeStyle = "#86837d"; c.lineWidth = 7 * sx; path(c, AL_KHAIL); c.stroke();
+  c.strokeStyle = "#5b6272"; c.lineWidth = 7 * sx; path(c, AL_KHAIL); c.stroke();
   // mare e Creek: trasparenti (sotto c'è l'acqua)
   c.globalCompositeOperation = "destination-out";
   c.fillStyle = "#000"; c.strokeStyle = "#000";
@@ -86,8 +86,9 @@ export function makeLandTextures(size: number, towers: Tower[] = []) {
   c.lineWidth = 13 * sx; path(c, CANAL); c.stroke();
   c.beginPath(); c.ellipse(px(LAKE.x), pz(LAKE.z), LAKE.rx * sx, LAKE.rz * sx, 0, 0, Math.PI * 2); c.fill();
   c.globalCompositeOperation = "source-over";
+  c.strokeStyle = "rgba(255,255,255,0.95)"; c.lineWidth = 2.2 * sx; path(c, COAST); c.stroke();
   // Palm Jumeirah (terra emersa nel mare)
-  c.strokeStyle = "#f2dfb8"; c.lineCap = "round";
+  c.strokeStyle = "#f7e2b5"; c.lineCap = "round";
   c.lineWidth = 16 * sx;
   c.beginPath(); c.moveTo(px(PALM.x), pz(PALM.z + 20)); c.lineTo(px(PALM.x), pz(PALM.trunkEnd)); c.stroke();
   c.lineWidth = 6 * sx;
